@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 import it.polito.tdp.nyc.model.Hotspot;
+import it.polito.tdp.nyc.model.NTA;
 
 public class NYCDao {
 	
@@ -35,6 +37,61 @@ public class NYCDao {
 
 		return result;
 	}
+	
+	public List<NTA> getNTAByBorough(String borough){
+		
+		String sql = "SELECT DISTINCT n.NTACode,n.NTAName,n.SSID "
+				+ "FROM nyc_wifi_hotspot_locations n "
+				+ "WHERE n.Borough=? "
+				+ "ORDER BY n.NTACode ";
+		
+		List<NTA> result = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, borough);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				//Per inserire il primo NTA
+				if(result.isEmpty()) {
+					NTA n =new NTA(res.getString("NTACode"),res.getString("NTAName"));
+					result.add(n);
+					n.addSSID(res.getString("SSID"));
+				}else {
+					
+				boolean controllo=false;
+				//Controllo se gia appartiene al resultSet, in quel casso aggiungere l'ssid alla lista
+				for(NTA nta : result) {
+				 if(nta.getNTACode().compareTo(res.getString("NTACode"))==0) {
+					nta.addSSID(res.getString("SSID"));
+					controllo=true;
+					}}
+				//Non presente , quindi aggiungo uno nuovo
+				if(controllo==false) {
+					NTA n =new NTA(res.getString("NTACode"),res.getString("NTAName"));
+					result.add(n);
+					n.addSSID(res.getString("SSID"));
+				}
+				}
+					
+				}
+			
+					
+					
+					
+			
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+
+		return result;
+	}
+	
+	
 	
 	
 }
