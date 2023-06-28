@@ -30,12 +30,12 @@ public class Model {
 	
 	public List<String> simulazione(double probability, int duration) {
 		
-		simulator=new Simulatore(duration,probability,this.grafo);
+		simulator=new Simulatore(probability,duration,this.grafo);
 		
 		simulator.initialize();
 		simulator.run();
 
-		numTotShare = new HashMap<NTA,Integer>(simulator.datiOutput());
+		numTotShare = new HashMap<NTA,Integer>(simulator.datiInOutput());
 	
 		List<String> output = new ArrayList<>();
 		for(NTA n : numTotShare.keySet()) {

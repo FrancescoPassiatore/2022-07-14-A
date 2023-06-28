@@ -16,121 +16,100 @@ import it.polito.tdp.nyc.model.Event.EventType;
 public class Simulatore {
 	
 	//Dati in input
-	private int duration;
 	private double probShare;
+	private int durata;
 	
+	//Stato simulazione
+	private Graph<NTA,DefaultWeightedEdge> grafo;
+	private Map<NTA,Integer> numberShares;
+	private List<NTA> vertici;
 	
-	//Stato del sistema
-	Graph<NTA,DefaultWeightedEdge> graph; //Grafo da esercizio punto 1
-	Map<NTA,Integer> numberShares;
+	//Dati in output
+	private Map<NTA,Integer> numberTotShares;
 	
-	//Output
-	Map<NTA,Integer> numberTotShares;
-	
-	//Creazione Queue
-	PriorityQueue<Event> queue;
-	
-	List<NTA> vertici ;
-	
-	//Costruttore per stabilire i parametri iniziali
-	public Simulatore(int duration, double probShare, Graph<NTA, DefaultWeightedEdge> graph) {
-		
-		this.duration = duration;
-		this.probShare = probShare;
-		this.graph = graph;
-	
-	}
+	//Coda eventi
+	private PriorityQueue<Event> queue ;
 
+	public Simulatore(double probShare, int durata, Graph<NTA, DefaultWeightedEdge> grafo) {
+		super();
+		this.probShare = probShare;
+		this.durata = durata;
+		this.grafo = grafo;
+	}
+	
 	public void initialize() {
 		
-		//Inizializzazione
-		vertici = new ArrayList<>(this.graph.vertexSet());
+		this.numberShares= new HashMap<>();
+		this.numberTotShares = new HashMap<>();
 		
-		//creazione mappe
-		numberShares = new HashMap<NTA,Integer>();
-		numberTotShares=new HashMap<NTA,Integer>();
-		
-		//Inserire vertici(NTA) in lista e po aggiungere in mappa  con numshare =0
-		for(NTA n : vertici) {
+		for(NTA n : this.grafo.vertexSet()) {
 			this.numberShares.put(n, 0);
 			this.numberTotShares.put(n, 0);
 		}
 		
+		vertici=new ArrayList<>(this.grafo.vertexSet());
 		
-		//Creazione evento
-		queue= new PriorityQueue<Event>();
+		queue = new PriorityQueue<>();
 		
-		//Inserimento eventi
-		for(int t=0;t<100;t++) {
-			double rand= Math.random();
-			if( rand <= this.probShare) {
-				int n = (int) (Math.random()* this.vertici.size());
-				queue.add(new Event(t,this.duration,this.vertici.get(n),EventType.SHARE));
-				}
+		for(int t= 0; t<=100;t++) {
+			if(Math.random()<this.probShare) {
+				int n =(int)( Math.random()*this.vertici.size());
+				queue.add(new Event(EventType.SHARE,this.durata,t,this.vertici.get(n)));
 			}
 		}
+	}
 	
 	public void run() {
 		
-		while(!this.queue.isEmpty()) {
+		while(!queue.isEmpty()) {
+			Event e = queue.poll();
+			int timeE = e.getTempo();
 			
-			Event e = this.queue.poll();
-			
-			int time = e.getTime();
-			if(time>=100) {
-				for(NTA n : this.numberShares.keySet()) {
-					this.numberTotShares.put(n, this.numberShares.get(n));}
+			if(timeE>100) {
 				break;
-				}
+			}
 			
-			int durationNTA = e.getDuration();
-			EventType type = e.getType();
-			NTA nta = e.getNta();
+			int durataE = e.getDurata();
+			NTA ntaE = e.getNta();
 			
-			switch(type) {
-			
+			switch(e.getType()) {
 			case SHARE:
-				//Chiudere la condivisione del Nta
-				this.numberShares.put(nta,this.numberShares.get(nta)+1);
-				this.queue.add(new Event(time+durationNTA,0,nta,EventType.STOP));
 				
-				//Ricondividere con quello adiacente
-				NTA nuovo = calcoloAdiacente(nta);
-				if(nuovo!=null)
-				 this.queue.add(new Event(time+1,durationNTA/2,nuovo,EventType.SHARE));
+				this.numberShares.put(ntaE,this.numberShares.get(ntaE)+1 );
+				this.numberTotShares.put(ntaE, this.numberTotShares.get(ntaE)+1);
+				
+				this.queue.add(new Event(EventType.STOP,durataE+timeE,0,ntaE));
+				NTA nuovo = findAdj(ntaE);
+				this.queue.add(new Event(EventType.SHARE,durataE/2,timeE+1,nuovo));
 				
 				break;
-			
-			case STOP:	
+				
+			case STOP:
+				
+				this.numberShares.put(ntaE, this.numberShares.get(ntaE)-1);
+				
 				break;
-			
 			}
 		}
-			
 	}
 
-	
-	
-	
-	private NTA calcoloAdiacente(NTA nta) {
+	private NTA findAdj(NTA ntaE) {
 		
-		int max = -1;
-		NTA best=null;
-		
-		for(DefaultWeightedEdge e : this.graph.outgoingEdgesOf(nta)) {
-			NTA n = Graphs.getOppositeVertex(this.graph, e, nta);
-			int peso = (int)this.graph.getEdgeWeight(e);
-			
-			if(peso>max && this.numberShares.get(n)==0) {
-				max=peso;
-				best=n;
+		List<NTA> adj = new ArrayList<>(Graphs.neighborListOf(this.grafo, ntaE));
+		double pesoMax=0;
+		NTA adjBest= null;
+		for(NTA n : adj) {
+			DefaultWeightedEdge e = this.grafo.getEdge(n, ntaE);
+			if (this.grafo.getEdgeWeight(e)>pesoMax) {
+				pesoMax = this.grafo.getEdgeWeight(e);
+				adjBest = n;
 			}
 		}
 		
-		return best;
+		return adjBest;
 	}
-
-	public Map<NTA,Integer> datiOutput(){
+	
+	public Map<NTA,Integer> datiInOutput(){
 		return this.numberTotShares;
 	}
 }

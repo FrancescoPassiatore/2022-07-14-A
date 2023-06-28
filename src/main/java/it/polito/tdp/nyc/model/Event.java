@@ -1,55 +1,50 @@
 package it.polito.tdp.nyc.model;
 
 public class Event implements Comparable<Event> {
-
+	
 	public enum EventType{
 		SHARE,
 		STOP
 		}
-	
-	private int time;
-	private int duration;
+
+	private int durata;
+	private int tempo;
 	private NTA nta;
 	private EventType type;
 	
-	
-	public Event(int time, int duration, NTA nta, EventType type) {
+	public Event(EventType type,int durata, int tempo, NTA nta) {
 		super();
-		this.time = time;
-		this.duration = duration;
-		this.nta = nta;
 		this.type = type;
+		this.durata = durata;
+		this.tempo = tempo;
+		this.nta = nta;
+	}
+	
+	
+
+	public EventType getType() {
+		return type;
 	}
 
-
-	public int getTime() {
-		return time;
+	public int getDurata() {
+		return durata;
 	}
 
-
-	public int getDuration() {
-		return duration;
+	public int getTempo() {
+		return tempo;
 	}
-
 
 	public NTA getNta() {
 		return nta;
 	}
 
-
-	public EventType getType() {
-		return type;
-	}
-	
-	
-
 	@Override
 	public int compareTo(Event o) {
-		
-		return this.time-o.time;
+		return this.getTempo()- o.getTempo();
 	}
-	
 
+	
+	
 	
 	
 }
